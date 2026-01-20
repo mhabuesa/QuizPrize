@@ -21,8 +21,8 @@ class QuizController extends Controller
                 'status' => 'locked',
                 'link' => $data['link']
             ]);
-        }elseif (WinnerRecord::where('ip_address', $request->ip())->exists()) {
-            $record = WinnerRecord::where('ip_address', $request->ip())->first();
+        }elseif (WinnerRecord::where('device_id', $request->device_id)->exists()) {
+            $record = WinnerRecord::where('device_id', $request->device_id)->first();
 
             return response()->json([
                 'status' => 'locked',
@@ -42,7 +42,7 @@ class QuizController extends Controller
         ]);
 
         WinnerRecord::create([
-            'ip_address' => $request->ip(),
+            'device_id' => $request->device_id,
             'file_path' => $randomLink,
         ]);
 

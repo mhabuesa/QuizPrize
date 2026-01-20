@@ -303,21 +303,19 @@
 
     <script>
         function createParticles() {
-        const p = document.getElementById('particles');
-        for (let i = 0; i < 50; i++) {
-            const d = document.createElement('div');
-            d.className = 'particle';
-            d.style.width = d.style.height = Math.random() * 8 + 4 + 'px';
-            d.style.left = Math.random() * 100 + '%';
-            d.style.background = 'rgba(255,255,255,0.5)';
-            d.style.animation = `float ${Math.random()*10+10}s linear infinite`;
-            p.appendChild(d);
+            const p = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const d = document.createElement('div');
+                d.className = 'particle';
+                d.style.width = d.style.height = Math.random() * 8 + 4 + 'px';
+                d.style.left = Math.random() * 100 + '%';
+                d.style.background = 'rgba(255,255,255,0.5)';
+                d.style.animation = `float ${Math.random()*10+10}s linear infinite`;
+                p.appendChild(d);
+            }
         }
-    }
-    createParticles();
-        /* ===============================
-       DOM ELEMENTS
-    =============================== */
+        createParticles();
+
         const mainButton = document.getElementById('mainButton');
         const buttonText = document.getElementById('buttonText');
         const progressCircle = document.querySelector('#progressCircle circle:nth-child(2)');
@@ -326,16 +324,12 @@
         const headerText = document.getElementById('headerText');
         const generatedLink = document.getElementById('generatedLink');
 
-        /* ===============================
-           COOKIE HELPER
-        =============================== */
+        // COOKIE HELPER
         function hasQuizCookie() {
             return document.cookie.split('; ').some(row => row.startsWith('quiz_reward='));
         }
 
-        /* ===============================
-           RIPPLE EFFECT (OPTIONAL)
-        =============================== */
+        // RIPPLE EFFECT
         function createRipple(e) {
             const ripple = document.createElement('span');
             ripple.className = 'ripple';
@@ -348,9 +342,21 @@
             setTimeout(() => ripple.remove(), 600);
         }
 
-        /* ===============================
-           BUTTON CLICK
-        =============================== */
+        // DEVICE FINGERPRINT
+        function getDeviceFingerprint() {
+            const fingerprint = [
+                navigator.userAgent,
+                screen.width,
+                screen.height,
+                screen.colorDepth,
+                new Date().getTimezoneOffset(),
+                navigator.language,
+                navigator.platform
+            ].join('||');
+            return btoa(fingerprint);
+        }
+
+        // BUTTON CLICK
         mainButton.addEventListener('click', function(e) {
             if (hasQuizCookie()) {
                 fetchReward();
@@ -360,45 +366,40 @@
             createRipple(e);
             buttonText.textContent = 'প্রসেস হচ্ছে...';
 
-            // Start circular fill at 0
-            let offset = 282.6; // full circle
+            // Start circular fill
+            let offset = 282.6;
             progressCircle.style.strokeDashoffset = offset;
-
-            // Animate circle incrementally until backend responds
             const startTime = performance.now();
+            window.backendDone = false;
 
             function animate() {
                 const elapsed = performance.now() - startTime;
-                // incrementally reduce offset, max to 282.6 -> 0
-                offset = Math.max(0, 282.6 - (elapsed * 0.5)); // adjust multiplier if needed
+                offset = Math.max(0, 282.6 - (elapsed * 0.5));
                 progressCircle.style.strokeDashoffset = offset;
-
-                // Continue animating until backend resolves
-                if (!window.backendDone) {
-                    requestAnimationFrame(animate);
-                }
+                if (!window.backendDone) requestAnimationFrame(animate);
             }
-            window.backendDone = false;
             requestAnimationFrame(animate);
 
-            fetchReward();
+            // SEND device_id to backend
+            const device_id = getDeviceFingerprint();
+            fetchReward(device_id);
         });
 
-        /* ===============================
-           FETCH REWARD
-        =============================== */
-        function fetchReward() {
+        // FETCH REWARD
+        function fetchReward(device_id = null) {
             fetch('/quiz/shuffle', {
                     method: 'POST',
                     headers: {
+                        'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    }
+                    },
+                    body: JSON.stringify({
+                        device_id
+                    })
                 })
                 .then(res => res.json())
                 .then(data => {
-                    window.backendDone = true; // stop animation
-
-                    // instantly fill remaining circle
+                    window.backendDone = true;
                     progressCircle.style.strokeDashoffset = 0;
 
                     if (data.status === 'success' || data.status === 'locked') {
@@ -416,9 +417,7 @@
                 });
         }
 
-        /* ===============================
-           SHOW RESULT
-        =============================== */
+        // SHOW RESULT
         function showResult(link) {
             buttonContainer.classList.add('hidden');
             headerText.classList.add('hidden');
@@ -426,23 +425,20 @@
             generatedLink.href = link;
         }
 
-        /* ===============================
-           RESET BUTTON IF ERROR
-        =============================== */
+        // RESET BUTTON
         function resetButton() {
             buttonText.textContent = 'চাপুন';
             progressCircle.style.strokeDashoffset = 282.6;
         }
 
-        /* ===============================
-           PAGE LOAD CHECK FOR COOKIE
-        =============================== */
+        // PAGE LOAD CHECK
         window.addEventListener('load', () => {
             if (hasQuizCookie()) {
                 fetchReward();
             }
         });
     </script>
+
 
 
 
