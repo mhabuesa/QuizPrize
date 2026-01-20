@@ -45,6 +45,7 @@ class QuizController extends Controller
 
         WinnerRecord::create([
             'device_id' => $request->device_id,
+            'file_name' => $name,
             'file_path' => $randomLink,
         ]);
 

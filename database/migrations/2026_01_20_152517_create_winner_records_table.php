@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('winner_records', function (Blueprint $table) {
             $table->id();
-            $table->string('ip_address');
+            $table->string('device_id');
+            $table->string('file_name');
             $table->string('file_path');
             $table->timestamps();
         });

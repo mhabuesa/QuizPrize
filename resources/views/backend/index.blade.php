@@ -44,7 +44,7 @@
                                 <thead>
                                     <tr>
                                         <th class="text-center" style="width: 80px;">#</th>
-                                        <th>IP Address</th>
+                                        <th>File Name</th>
                                         <th class="text-center" style="width: 120px;">Claimed Date</th>
                                     </tr>
                                 </thead>
@@ -52,7 +52,7 @@
                                     @foreach ($winners as $index => $winner)
                                         <tr>
                                             <td class="text-center">{{ $index + 1 }}</td>
-                                            <td>{{ $winner->ip_address }}</td>
+                                            <td>{{ $winner->file_name }}</td>
                                             <td class="text-center">
                                                 {{ $winner->created_at->format('d-m-y H:i') }}
                                             </td>
