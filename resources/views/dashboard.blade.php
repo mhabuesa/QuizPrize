@@ -290,12 +290,13 @@
                 <p class="text-white/80 mb-6">🤍 খলীফাজী-মুজীরাজী আপনাকে অনন্তকালের জন্য কবুল করুন। আমীন।</p>
                 <p class="text-white/80 mb-6">🎁✨ আপনার জন্য আমাদের পক্ষ থেকে বিশেষ উপহার ✨🎁</p>
 
-                <a id="generatedLink" href="#" download="gift_from_SAAB.mp3"
+                <a id="generatedLink" href="#"
                     class="inline-block bg-gradient-to-r from-green-400 to-emerald-500
    text-white font-bold py-4 px-10 rounded-full text-lg
    shadow-lg transition-all hover:scale-105">
                     লিংকে যান →
                 </a>
+
             </div>
         </div>
 
@@ -324,12 +325,16 @@
         const headerText = document.getElementById('headerText');
         const generatedLink = document.getElementById('generatedLink');
 
-        // COOKIE HELPER
+        const TOTAL_TIME = 9000; // 9 seconds
+        const FULL_OFFSET = 282.6;
+
+        let backendResponse = null;
+        let spinning = false;
+
         function hasQuizCookie() {
             return document.cookie.split('; ').some(row => row.startsWith('quiz_reward='));
         }
 
-        // RIPPLE EFFECT
         function createRipple(e) {
             const ripple = document.createElement('span');
             ripple.className = 'ripple';
@@ -342,50 +347,59 @@
             setTimeout(() => ripple.remove(), 600);
         }
 
-        // DEVICE FINGERPRINT
         function getDeviceFingerprint() {
-            const fingerprint = [
+            return btoa([
                 navigator.userAgent,
                 screen.width,
                 screen.height,
                 screen.colorDepth,
-                new Date().getTimezoneOffset(),
                 navigator.language,
                 navigator.platform
-            ].join('||');
-            return btoa(fingerprint);
+            ].join('||'));
         }
 
-        // BUTTON CLICK
-        mainButton.addEventListener('click', function(e) {
-            if (hasQuizCookie()) {
-                fetchReward();
-                return;
-            }
+        function startSpinner() {
+            let start = performance.now();
+            spinning = true;
 
-            createRipple(e);
-            buttonText.textContent = 'প্রসেস হচ্ছে...';
+            function animate(now) {
+                if (!spinning) return;
 
-            // Start circular fill
-            let offset = 282.6;
-            progressCircle.style.strokeDashoffset = offset;
-            const startTime = performance.now();
-            window.backendDone = false;
+                const elapsed = now - start;
+                const progress = Math.min(elapsed / TOTAL_TIME, 1);
 
-            function animate() {
-                const elapsed = performance.now() - startTime;
-                offset = Math.max(0, 282.6 - (elapsed * 0.5));
-                progressCircle.style.strokeDashoffset = offset;
-                if (!window.backendDone) requestAnimationFrame(animate);
+                // smooth constant speed
+                progressCircle.style.strokeDashoffset =
+                    FULL_OFFSET - FULL_OFFSET * progress;
+
+                if (elapsed < TOTAL_TIME) {
+                    requestAnimationFrame(animate);
+                } else {
+                    spinning = false;
+                    progressCircle.style.strokeDashoffset = 0;
+                    finishFlow();
+                }
             }
             requestAnimationFrame(animate);
+        }
 
-            // SEND device_id to backend
-            const device_id = getDeviceFingerprint();
-            fetchReward(device_id);
+        mainButton.addEventListener('click', function(e) {
+            if (hasQuizCookie()) return fetchReward();
+
+            createRipple(e);
+            backendResponse = null;
+
+            buttonText.textContent = 'প্রস্তুত হচ্ছে...';
+            progressCircle.style.strokeDashoffset = FULL_OFFSET;
+
+            startSpinner();
+
+            setTimeout(() => buttonText.textContent = 'লটারি হচ্ছে...', 3000);
+            setTimeout(() => buttonText.textContent = 'আর কিছুক্ষণ...', 6000);
+
+            fetchReward(getDeviceFingerprint());
         });
 
-        // FETCH REWARD
         function fetchReward(device_id = null) {
             fetch('/quiz/shuffle', {
                     method: 'POST',
@@ -399,45 +413,39 @@
                 })
                 .then(res => res.json())
                 .then(data => {
-                    window.backendDone = true;
-                    progressCircle.style.strokeDashoffset = 0;
-
-                    if (data.status === 'success' || data.status === 'locked') {
-                        showResult(data.link);
-                    } else {
-                        alert('কোনো গিফট পাওয়া যায়নি');
-                        resetButton();
-                    }
+                    backendResponse = data; // just store
                 })
                 .catch(() => {
-                    window.backendDone = true;
-                    progressCircle.style.strokeDashoffset = 282.6;
-                    alert('Server error, আবার চেষ্টা করুন');
+                    alert('Server error');
                     resetButton();
                 });
         }
 
-        // SHOW RESULT
+        function finishFlow() {
+            if (!backendResponse) {
+                alert('Server slow, আবার চেষ্টা করুন');
+                resetButton();
+                return;
+            }
+            showResult(backendResponse.link);
+        }
+
         function showResult(link) {
             buttonContainer.classList.add('hidden');
             headerText.classList.add('hidden');
             linkContainer.classList.remove('hidden');
             generatedLink.href = link;
+            generatedLink.setAttribute('download', backendResponse.name);
         }
 
-        // RESET BUTTON
         function resetButton() {
+            spinning = false;
             buttonText.textContent = 'চাপুন';
-            progressCircle.style.strokeDashoffset = 282.6;
+            progressCircle.style.strokeDashoffset = FULL_OFFSET;
         }
-
-        // PAGE LOAD CHECK
-        window.addEventListener('load', () => {
-            if (hasQuizCookie()) {
-                fetchReward();
-            }
-        });
     </script>
+
+
 
 
 

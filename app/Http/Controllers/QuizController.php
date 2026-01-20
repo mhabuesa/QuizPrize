@@ -3,9 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use ZipArchive;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
 use App\Models\AudioFile;
 use App\Models\WinnerRecord;
 
@@ -19,14 +16,16 @@ class QuizController extends Controller
 
             return response()->json([
                 'status' => 'locked',
-                'link' => $data['link']
+                'link' => $data['link'],
+                'name' => $data['name']
             ]);
-        }elseif (WinnerRecord::where('device_id', $request->device_id)->exists()) {
+        } elseif (WinnerRecord::where('device_id', $request->device_id)->exists()) {
             $record = WinnerRecord::where('device_id', $request->device_id)->first();
 
             return response()->json([
                 'status' => 'locked',
-                'link' => $record->file_path
+                'link' => $record->file_path,
+                'name' => $record->file_name
             ]);
         }
 
@@ -35,9 +34,12 @@ class QuizController extends Controller
 
         $randomLink = $links[array_rand($links)];
 
+        $name = AudioFile::where('file_path', $randomLink)->first()->file_name;
+
         // 3️⃣ Cookie data
         $cookieData = json_encode([
             'link' => $randomLink,
+            'name' => $name,
             'claimed_at' => time()
         ]);
 
@@ -49,11 +51,10 @@ class QuizController extends Controller
         // 4️⃣ Return response with cookie (1 year)
         return response()->json([
             'status' => 'success',
-            'link' => $randomLink
+            'link' => $randomLink,
+            'name' => $name
         ])->withCookie(
             cookie('quiz_reward', $cookieData, 60 * 24 * 365) // minutes
         );
     }
-
-
 }
