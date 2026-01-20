@@ -245,8 +245,10 @@
     <div class="relative z-10 text-center">
 
         <div id="headerText">
+            <p class="text-white/80 text-xl mb-4">
+                লাইলাতুল ই'লান শরীফ উপলক্ষে আয়োজিত বিশেষ প্রতিযোগিতা</p>
             <h2 class="text-white text-3xl md:text-3xl font-bold mb-4 ">
-                লাইলাতুল ই'লান শরীফ উপলক্ষে আয়োজিত বিশেষ প্রতিযোগিতার পুরুষ্কার প্রস্তুত!
+                পুরুষ্কার প্রস্তুত!
             </h2>
             <p class="text-white/80 text-xl mb-12">
                 কাঙ্ক্ষিত পুরুষ্কারটি লটারির মাধ্যমে নিশ্চিত করুন। </p>
@@ -300,6 +302,19 @@
     </div>
 
     <script>
+        function createParticles() {
+        const p = document.getElementById('particles');
+        for (let i = 0; i < 50; i++) {
+            const d = document.createElement('div');
+            d.className = 'particle';
+            d.style.width = d.style.height = Math.random() * 8 + 4 + 'px';
+            d.style.left = Math.random() * 100 + '%';
+            d.style.background = 'rgba(255,255,255,0.5)';
+            d.style.animation = `float ${Math.random()*10+10}s linear infinite`;
+            p.appendChild(d);
+        }
+    }
+    createParticles();
         /* ===============================
        DOM ELEMENTS
     =============================== */

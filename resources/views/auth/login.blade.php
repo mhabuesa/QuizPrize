@@ -24,7 +24,7 @@
           </div>
           <div class="block-content">
             <div class="p-sm-3 px-lg-4 px-xxl-5 py-lg-5">
-              <h1 class="h2 mb-1">Chishti Agro</h1>
+              <h1 class="h2 mb-1">{{ config('app.name') }}</h1>
               <p class="fw-medium text-muted">
                 Welcome, please login.
               </p>
@@ -64,7 +64,7 @@
       </div>
     </div>
     <div class="fs-sm text-muted text-center">
-      <strong>Qaseedah Shareef 1.0</strong> &copy; <span data-toggle="year-copy"></span>
+      <strong>9Shareef</strong> &copy; <span data-toggle="year-copy"></span>
     </div>
   </div>
 </div>
