@@ -303,6 +303,9 @@
     </div>
 
     <script>
+        /* =========================
+           PARTICLES
+        ========================= */
         function createParticles() {
             const p = document.getElementById('particles');
             for (let i = 0; i < 50; i++) {
@@ -311,12 +314,15 @@
                 d.style.width = d.style.height = Math.random() * 8 + 4 + 'px';
                 d.style.left = Math.random() * 100 + '%';
                 d.style.background = 'rgba(255,255,255,0.5)';
-                d.style.animation = `float ${Math.random()*10+10}s linear infinite`;
+                d.style.animation = `float ${Math.random() * 10 + 10}s linear infinite`;
                 p.appendChild(d);
             }
         }
         createParticles();
 
+        /* =========================
+           ELEMENTS
+        ========================= */
         const mainButton = document.getElementById('mainButton');
         const buttonText = document.getElementById('buttonText');
         const progressCircle = document.querySelector('#progressCircle circle:nth-child(2)');
@@ -325,28 +331,39 @@
         const headerText = document.getElementById('headerText');
         const generatedLink = document.getElementById('generatedLink');
 
+        /* =========================
+           CONSTANTS
+        ========================= */
         const TOTAL_TIME = 9000; // 9 seconds
         const FULL_OFFSET = 282.6;
 
+        /* =========================
+           STATE
+        ========================= */
         let backendResponse = null;
         let spinning = false;
 
-        function hasQuizCookie() {
-            return document.cookie.split('; ').some(row => row.startsWith('quiz_reward='));
-        }
-
+        /* =========================
+           RIPPLE EFFECT
+        ========================= */
         function createRipple(e) {
             const ripple = document.createElement('span');
             ripple.className = 'ripple';
+
             const rect = mainButton.getBoundingClientRect();
             const size = Math.max(rect.width, rect.height);
+
             ripple.style.width = ripple.style.height = size + 'px';
             ripple.style.left = e.clientX - rect.left - size / 2 + 'px';
             ripple.style.top = e.clientY - rect.top - size / 2 + 'px';
+
             mainButton.appendChild(ripple);
             setTimeout(() => ripple.remove(), 600);
         }
 
+        /* =========================
+           DEVICE FINGERPRINT
+        ========================= */
         function getDeviceFingerprint() {
             return btoa([
                 navigator.userAgent,
@@ -358,8 +375,11 @@
             ].join('||'));
         }
 
+        /* =========================
+           SPINNER (9 sec fixed)
+        ========================= */
         function startSpinner() {
-            let start = performance.now();
+            const start = performance.now();
             spinning = true;
 
             function animate(now) {
@@ -368,7 +388,6 @@
                 const elapsed = now - start;
                 const progress = Math.min(elapsed / TOTAL_TIME, 1);
 
-                // smooth constant speed
                 progressCircle.style.strokeDashoffset =
                     FULL_OFFSET - FULL_OFFSET * progress;
 
@@ -380,12 +399,14 @@
                     finishFlow();
                 }
             }
+
             requestAnimationFrame(animate);
         }
 
+        /* =========================
+           BUTTON CLICK
+        ========================= */
         mainButton.addEventListener('click', function(e) {
-            if (hasQuizCookie()) return fetchReward();
-
             createRipple(e);
             backendResponse = null;
 
@@ -400,50 +421,70 @@
             fetchReward(getDeviceFingerprint());
         });
 
-        function fetchReward(device_id = null) {
+        /* =========================
+           FETCH BACKEND
+        ========================= */
+        function fetchReward(device_id) {
             fetch('/quiz/shuffle', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
                     },
-                    body: JSON.stringify({
+                    body: new URLSearchParams({
                         device_id
                     })
                 })
-                .then(res => res.json())
-                .then(data => {
-                    backendResponse = data; // just store
+                .then(res => {
+                    if (!res.ok) throw new Error('Server error');
+                    return res.json();
                 })
-                .catch(() => {
+                .then(data => {
+                    backendResponse = data;
+                })
+                .catch(err => {
+                    console.error(err);
                     alert('Server error');
                     resetButton();
                 });
         }
 
+
+        /* =========================
+           FINISH FLOW
+        ========================= */
         function finishFlow() {
             if (!backendResponse) {
                 alert('Server slow, আবার চেষ্টা করুন');
                 resetButton();
                 return;
             }
-            showResult(backendResponse.link);
+
+            showResult(backendResponse.link, backendResponse.name);
         }
 
-        function showResult(link) {
+        /* =========================
+           SHOW RESULT
+        ========================= */
+        function showResult(link, name) {
             buttonContainer.classList.add('hidden');
             headerText.classList.add('hidden');
             linkContainer.classList.remove('hidden');
+
             generatedLink.href = link;
-            generatedLink.setAttribute('download', backendResponse.name);
+            generatedLink.setAttribute('download', name);
         }
 
+        /* =========================
+           RESET
+        ========================= */
         function resetButton() {
             spinning = false;
             buttonText.textContent = 'চাপুন';
             progressCircle.style.strokeDashoffset = FULL_OFFSET;
         }
     </script>
+
 
 
 

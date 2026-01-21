@@ -2,24 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\AudioFile;
 use App\Models\WinnerRecord;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class QuizController extends Controller
 {
     public function shuffle(Request $request)
     {
+        Log::info($request->device_id);
         // 1️⃣ Already claimed?
-        if ($request->hasCookie('quiz_reward')) {
-            $data = json_decode($request->cookie('quiz_reward'), true);
-
-            return response()->json([
-                'status' => 'locked',
-                'link' => $data['link'],
-                'name' => $data['name']
-            ]);
-        } elseif (WinnerRecord::where('device_id', $request->device_id)->exists()) {
+        if (WinnerRecord::where('device_id', $request->device_id)->exists()) {
             $record = WinnerRecord::where('device_id', $request->device_id)->first();
 
             return response()->json([
@@ -36,13 +30,6 @@ class QuizController extends Controller
 
         $name = AudioFile::where('file_path', $randomLink)->first()->file_name;
 
-        // 3️⃣ Cookie data
-        $cookieData = json_encode([
-            'link' => $randomLink,
-            'name' => $name,
-            'claimed_at' => time()
-        ]);
-
         WinnerRecord::create([
             'device_id' => $request->device_id,
             'file_name' => $name,
@@ -54,8 +41,6 @@ class QuizController extends Controller
             'status' => 'success',
             'link' => $randomLink,
             'name' => $name
-        ])->withCookie(
-            cookie('quiz_reward', $cookieData, 60 * 24 * 365) // minutes
-        );
+        ]);
     }
 }
