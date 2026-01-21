@@ -303,9 +303,6 @@
     </div>
 
     <script>
-        /* =========================
-           PARTICLES
-        ========================= */
         function createParticles() {
             const p = document.getElementById('particles');
             for (let i = 0; i < 50; i++) {
@@ -320,9 +317,6 @@
         }
         createParticles();
 
-        /* =========================
-           ELEMENTS
-        ========================= */
         const mainButton = document.getElementById('mainButton');
         const buttonText = document.getElementById('buttonText');
         const progressCircle = document.querySelector('#progressCircle circle:nth-child(2)');
@@ -331,21 +325,24 @@
         const headerText = document.getElementById('headerText');
         const generatedLink = document.getElementById('generatedLink');
 
-        /* =========================
-           CONSTANTS
-        ========================= */
-        const TOTAL_TIME = 9000; // 9 seconds
+        const TOTAL_TIME = 9000; // 9 sec
         const FULL_OFFSET = 282.6;
 
-        /* =========================
-           STATE
-        ========================= */
         let backendResponse = null;
         let spinning = false;
 
-        /* =========================
-           RIPPLE EFFECT
-        ========================= */
+        /* ======================
+           COOKIE CHECK
+        ====================== */
+        function hasQuizCookie() {
+            return document.cookie
+                .split('; ')
+                .some(row => row.startsWith('quiz_reward='));
+        }
+
+        /* ======================
+           RIPPLE
+        ====================== */
         function createRipple(e) {
             const ripple = document.createElement('span');
             ripple.className = 'ripple';
@@ -361,25 +358,11 @@
             setTimeout(() => ripple.remove(), 600);
         }
 
-        /* =========================
-           DEVICE FINGERPRINT
-        ========================= */
-        function getDeviceFingerprint() {
-            return btoa([
-                navigator.userAgent,
-                screen.width,
-                screen.height,
-                screen.colorDepth,
-                navigator.language,
-                navigator.platform
-            ].join('||'));
-        }
-
-        /* =========================
-           SPINNER (9 sec fixed)
-        ========================= */
+        /* ======================
+           SPINNER (constant speed)
+        ====================== */
         function startSpinner() {
-            const start = performance.now();
+            let start = performance.now();
             spinning = true;
 
             function animate(now) {
@@ -403,9 +386,9 @@
             requestAnimationFrame(animate);
         }
 
-        /* =========================
+        /* ======================
            BUTTON CLICK
-        ========================= */
+        ====================== */
         mainButton.addEventListener('click', function(e) {
             createRipple(e);
             backendResponse = null;
@@ -418,22 +401,20 @@
             setTimeout(() => buttonText.textContent = 'লটারি হচ্ছে...', 3000);
             setTimeout(() => buttonText.textContent = 'আর কিছুক্ষণ...', 6000);
 
-            fetchReward(getDeviceFingerprint());
+            fetchReward();
         });
 
-        /* =========================
-           FETCH BACKEND
-        ========================= */
-        function fetchReward(device_id) {
+        /* ======================
+           FETCH (cookie only)
+        ====================== */
+        function fetchReward() {
             fetch('/quiz/shuffle', {
                     method: 'POST',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'X-CSRF-TOKEN': document
+                            .querySelector('meta[name="csrf-token"]').content,
                         'Accept': 'application/json'
-                    },
-                    body: new URLSearchParams({
-                        device_id
-                    })
+                    }
                 })
                 .then(res => {
                     if (!res.ok) throw new Error('Server error');
@@ -442,30 +423,27 @@
                 .then(data => {
                     backendResponse = data;
                 })
-                .catch(err => {
-                    console.error(err);
+                .catch(() => {
                     alert('Server error');
                     resetButton();
                 });
         }
 
-
-        /* =========================
-           FINISH FLOW
-        ========================= */
+        /* ======================
+           FINISH AFTER 9 SEC
+        ====================== */
         function finishFlow() {
             if (!backendResponse) {
                 alert('Server slow, আবার চেষ্টা করুন');
                 resetButton();
                 return;
             }
-
             showResult(backendResponse.link, backendResponse.name);
         }
 
-        /* =========================
+        /* ======================
            SHOW RESULT
-        ========================= */
+        ====================== */
         function showResult(link, name) {
             buttonContainer.classList.add('hidden');
             headerText.classList.add('hidden');
@@ -475,15 +453,16 @@
             generatedLink.setAttribute('download', name);
         }
 
-        /* =========================
+        /* ======================
            RESET
-        ========================= */
+        ====================== */
         function resetButton() {
             spinning = false;
             buttonText.textContent = 'চাপুন';
             progressCircle.style.strokeDashoffset = FULL_OFFSET;
         }
     </script>
+
 
 
 
