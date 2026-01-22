@@ -35,11 +35,10 @@ class QuizController extends Controller
             'claimed_at' => time()
         ]);
 
-        // WinnerRecord::create([
-        //     'device_id' => $request->device_id,
-        //     'file_name' => $name,
-        //     'file_path' => $randomLink,
-        // ]);
+        WinnerRecord::create([
+            'file_name' => $name,
+            'file_path' => $randomLink,
+        ]);
 
         // 4️⃣ Return response with cookie (1 year)
         return response()->json([
